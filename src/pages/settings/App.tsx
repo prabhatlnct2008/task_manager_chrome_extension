@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useStorageValue } from '../../shared/hooks'
 import { Card } from '../../shared/components/Card'
 import { Button } from '../../shared/components/Button'
@@ -9,14 +9,18 @@ import { Toggle } from '../../shared/components/Toggle'
 import { Modal } from '../../shared/components/Modal'
 import { storage } from '../../shared/lib/storage'
 import { sendMessage } from '../../shared/lib/messaging'
+import { exportAllToCsv, restoreFromCsv, downloadCsv } from '../../shared/lib/backup'
 import { MODEL_OPTIONS, NUDGE_OPTIONS, TONE_OPTIONS, DEFAULT_SETTINGS, DEFAULT_DAILY_PLAN, DEFAULT_TIMER_STATE } from '../../shared/constants'
 import type { Settings } from '../../shared/types'
 
 export function SettingsApp() {
   const { value: settings, loading } = useStorageValue('settings')
+  const { value: lastBackup } = useStorageValue('lastBackup')
   const [showKey, setShowKey] = useState(false)
   const [confirmAction, setConfirmAction] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<string | null>(null)
+  const [backupStatus, setBackupStatus] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (loading || !settings) {
     return (
@@ -76,7 +80,62 @@ export function SettingsApp() {
         sendMessage({ type: 'STOP_TIMER' }).catch(() => {})
         break
     }
+    if (confirmAction === 'restoreBackup') {
+      await handleRestoreBackup()
+      return
+    }
     setConfirmAction(null)
+  }
+
+  const handleExportBackup = async () => {
+    setBackupStatus('Exporting...')
+    try {
+      const csv = await exportAllToCsv()
+      downloadCsv(csv)
+      await storage.set('lastBackup', { csv, timestamp: Date.now() })
+      setBackupStatus('Backup downloaded!')
+    } catch {
+      setBackupStatus('Export failed.')
+    }
+    setTimeout(() => setBackupStatus(null), 3000)
+  }
+
+  const handleDownloadLastBackup = () => {
+    if (lastBackup?.csv) {
+      const date = new Date(lastBackup.timestamp).toISOString().split('T')[0]
+      downloadCsv(lastBackup.csv, `anchorflow-backup-${date}.csv`)
+    }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const csv = reader.result as string
+      setConfirmAction('restoreBackup')
+      // Store csv temporarily for restore confirmation
+      ;(window as unknown as Record<string, string>).__pendingRestore = csv
+    }
+    reader.readAsText(file)
+    // Reset input so the same file can be selected again
+    e.target.value = ''
+  }
+
+  const handleRestoreBackup = async () => {
+    const csv = (window as unknown as Record<string, string>).__pendingRestore
+    if (!csv) return
+    setBackupStatus('Restoring...')
+    try {
+      await restoreFromCsv(csv)
+      sendMessage({ type: 'STOP_TIMER' }).catch(() => {})
+      setBackupStatus('Restore complete! Data has been loaded.')
+    } catch {
+      setBackupStatus('Restore failed. Check that the file is a valid AnchorFlow backup.')
+    }
+    delete (window as unknown as Record<string, string>).__pendingRestore
+    setConfirmAction(null)
+    setTimeout(() => setBackupStatus(null), 4000)
   }
 
   const confirmLabels: Record<string, string> = {
@@ -84,6 +143,7 @@ export function SettingsApp() {
     clearSideQuests: 'Clear all side quests? This cannot be undone.',
     clearHistory: 'Clear all check-in history? Stats will be reset.',
     resetAll: 'Reset everything? All data and settings will be erased.',
+    restoreBackup: 'Restore from backup? This will replace all current tasks, side quests, check-in history, and settings (except your API key).',
   }
 
   return (
@@ -187,6 +247,39 @@ export function SettingsApp() {
           <p className="text-xs text-slate-500">
             {TONE_OPTIONS.find((o) => o.value === settings.tone)?.description}
           </p>
+        </Card>
+
+        {/* Backup & Restore */}
+        <Card className="p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">Backup & Restore</h2>
+          <p className="text-xs text-slate-500">
+            A backup is automatically saved every 24 hours. You can also export or restore manually.
+          </p>
+          <div className="space-y-2">
+            <Button variant="primary" size="sm" onClick={handleExportBackup} className="w-full">
+              Export Backup Now
+            </Button>
+            {lastBackup && (
+              <Button variant="secondary" size="sm" onClick={handleDownloadLastBackup} className="w-full">
+                Download Last Auto-Backup ({new Date(lastBackup.timestamp).toLocaleString()})
+              </Button>
+            )}
+            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} className="w-full">
+              Upload & Restore from CSV
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </div>
+          {backupStatus && (
+            <p className={`text-xs ${backupStatus.includes('failed') ? 'text-red-600' : 'text-teal-600'}`}>
+              {backupStatus}
+            </p>
+          )}
         </Card>
 
         {/* Data & Reset */}

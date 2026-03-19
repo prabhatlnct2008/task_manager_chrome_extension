@@ -7,6 +7,7 @@ const DEFAULTS: AnchorFlowStorage = {
   sideQuests: [],
   checkinHistory: [],
   timerState: DEFAULT_TIMER_STATE,
+  lastBackup: null,
 }
 
 export const storage = {

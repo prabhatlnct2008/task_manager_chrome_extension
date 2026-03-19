@@ -26,6 +26,8 @@ export const DEFAULT_TIMER_STATE: TimerState = {
 export const ALARM_NAME = 'anchorflow-checkin'
 export const SNOOZE_ALARM_NAME = 'anchorflow-snooze'
 export const SNOOZE_DELAY_MINUTES = 5
+export const BACKUP_ALARM_NAME = 'anchorflow-daily-backup'
+export const BACKUP_PERIOD_MINUTES = 1440 // 24 hours
 
 export const MODEL_OPTIONS = [
   { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast and affordable' },
