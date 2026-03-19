@@ -26,13 +26,15 @@ function getOrCreateShadowHost(): { host: HTMLDivElement; root: ShadowRoot } {
   return { host: shadowHost, root: shadowRoot }
 }
 
-function removeOverlay() {
+function removeOverlay(sendDismiss = false) {
   if (shadowHost) {
     shadowHost.remove()
     shadowHost = null
     shadowRoot = null
   }
-  chrome.runtime.sendMessage({ type: 'OVERLAY_DISMISSED', payload: { reason: 'action_taken' } })
+  if (sendDismiss) {
+    chrome.runtime.sendMessage({ type: 'OVERLAY_DISMISSED', payload: { reason: 'dismissed' } })
+  }
 }
 
 function renderCheckinOverlay(payload: ShowOverlayPayload) {
@@ -146,15 +148,13 @@ function renderCheckinOverlay(payload: ShowOverlayPayload) {
   if (!payload.hardMode) {
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
-        chrome.runtime.sendMessage({ type: 'OVERLAY_DISMISSED', payload: { reason: 'clicked_outside' } })
-        removeOverlay()
+        removeOverlay(true)
       }
     })
 
     document.addEventListener('keydown', function escHandler(e) {
       if (e.key === 'Escape') {
-        chrome.runtime.sendMessage({ type: 'OVERLAY_DISMISSED', payload: { reason: 'escaped' } })
-        removeOverlay()
+        removeOverlay(true)
         document.removeEventListener('keydown', escHandler)
       }
     })
