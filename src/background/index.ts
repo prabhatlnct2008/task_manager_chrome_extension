@@ -133,6 +133,7 @@ async function handleMessage(message: AnchorFlowMessage): Promise<unknown> {
 
     case 'OVERLAY_DISMISSED': {
       overlayActive = false
+      await resetAlarm()
       return { success: true }
     }
 
