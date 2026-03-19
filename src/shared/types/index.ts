@@ -52,12 +52,18 @@ export interface TimerState {
   snoozeCount: number
 }
 
+export interface BackupData {
+  csv: string
+  timestamp: number
+}
+
 export interface AnchorFlowStorage {
   settings: Settings
   dailyPlan: DailyPlan
   sideQuests: SideQuest[]
   checkinHistory: CheckinRecord[]
   timerState: TimerState
+  lastBackup: BackupData | null
 }
 
 // Message types

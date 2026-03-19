@@ -4,9 +4,9 @@
   "description": "Stay with the task you chose. A calm focus support tool.",
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "tsc --noEmit && vite build",
-    "build:fast": "vite build"
+    "dev": "npx vite build --watch",
+    "build": "npx tsc --noEmit && npx vite build",
+    "build:fast": "npx vite build"
   },
   "repository": {
     "type": "git",

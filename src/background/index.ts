@@ -1,6 +1,7 @@
 import { storage, generateId, getTodayDate } from '../shared/lib/storage'
 import { classifyCheckin, chipToClassification } from '../shared/lib/ai'
-import { ALARM_NAME, SNOOZE_ALARM_NAME, SNOOZE_DELAY_MINUTES, CLASSIFICATION_CONFIG } from '../shared/constants'
+import { exportAllToCsv } from '../shared/lib/backup'
+import { ALARM_NAME, SNOOZE_ALARM_NAME, SNOOZE_DELAY_MINUTES, BACKUP_ALARM_NAME, BACKUP_PERIOD_MINUTES, CLASSIFICATION_CONFIG } from '../shared/constants'
 import type {
   AnchorFlowMessage,
   CheckinRecord,
@@ -15,6 +16,11 @@ let overlayActive = false
 
 // Alarm handler
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === BACKUP_ALARM_NAME) {
+    await performDailyBackup()
+    return
+  }
+
   if (alarm.name !== ALARM_NAME && alarm.name !== SNOOZE_ALARM_NAME) return
 
   if (overlayActive) return
@@ -133,6 +139,7 @@ async function handleMessage(message: AnchorFlowMessage): Promise<unknown> {
 
     case 'OVERLAY_DISMISSED': {
       overlayActive = false
+      await resetAlarm()
       return { success: true }
     }
 
@@ -340,3 +347,21 @@ async function recoverTimerState() {
 }
 
 recoverTimerState()
+
+// Daily backup
+async function performDailyBackup() {
+  const csv = await exportAllToCsv()
+  await storage.set('lastBackup', { csv, timestamp: Date.now() })
+}
+
+async function ensureBackupAlarm() {
+  const existing = await chrome.alarms.get(BACKUP_ALARM_NAME)
+  if (!existing) {
+    await chrome.alarms.create(BACKUP_ALARM_NAME, {
+      delayInMinutes: BACKUP_PERIOD_MINUTES,
+      periodInMinutes: BACKUP_PERIOD_MINUTES,
+    })
+  }
+}
+
+ensureBackupAlarm()
