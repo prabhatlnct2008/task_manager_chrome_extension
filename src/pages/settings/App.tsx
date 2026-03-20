@@ -205,7 +205,7 @@ export function SettingsApp() {
             <ChipGroup
               options={NUDGE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label }))}
               value={String(settings.nudgeFrequency)}
-              onChange={(v) => updateSetting('nudgeFrequency', Number(v) as 15 | 30 | 45 | 60)}
+              onChange={(v) => updateSetting('nudgeFrequency', Number(v) as 2 | 15 | 30 | 45 | 60)}
             />
           </div>
         </Card>

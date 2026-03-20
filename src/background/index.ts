@@ -204,7 +204,19 @@ async function handleCheckinResponse(payload: CheckinResponsePayload) {
 
   // Build CTA options based on classification + snooze rules
   const timerState = await storage.get('timerState')
-  const ctaOptions = buildCtaOptions(classification, settings.allowSnooze, timerState.snoozeCount, settings.snoozeLimit)
+  const availableTasks = classification === 'urgent'
+    ? dailyPlan.tasks
+      .filter((task) => !task.completed && task.id !== activeTask.id)
+      .sort((a, b) => a.order - b.order)
+      .map((task) => ({ id: task.id, title: task.title }))
+    : undefined
+  const ctaOptions = buildCtaOptions(
+    classification,
+    settings.allowSnooze,
+    timerState.snoozeCount,
+    settings.snoozeLimit,
+    Boolean(availableTasks?.length),
+  )
 
   // Send feedback to content script
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -215,6 +227,7 @@ async function handleCheckinResponse(payload: CheckinResponsePayload) {
       suggestion,
       activeTaskTitle: activeTask.title,
       checkinId,
+      availableTasks,
       ctaOptions,
     }
     try {
@@ -279,6 +292,22 @@ async function handleOverlayAction(payload: OverlayActionPayload) {
     }
 
     case 'switch_task':
+      if (!payload.targetTaskId) {
+        overlayActive = false
+        await rearmAlarm()
+        break
+      }
+
+      await storage.update('dailyPlan', (plan) => {
+        const targetTask = plan.tasks.find((task) => task.id === payload.targetTaskId && !task.completed)
+        if (!targetTask) {
+          return plan
+        }
+        return {
+          ...plan,
+          activeTaskId: targetTask.id,
+        }
+      })
       overlayActive = false
       await rearmAlarm()
       break
@@ -292,6 +321,7 @@ function buildCtaOptions(
   allowSnooze: boolean,
   snoozeCount: number,
   snoozeLimit: number,
+  canSwitchTask = false,
 ) {
   const canSnooze = allowSnooze && snoozeCount < snoozeLimit
 
@@ -316,16 +346,19 @@ function buildCtaOptions(
     case 'break':
       return [{ label: 'Resume after break', action: 'return' as const }]
     case 'urgent':
-      return [
-        { label: 'Switch task', action: 'switch_task' as const },
-        { label: 'Return later', action: 'return' as const },
-      ]
+      return canSwitchTask
+        ? [
+          { label: 'Switch task', action: 'switch_task' as const },
+          { label: 'Return later', action: 'return' as const },
+        ]
+        : [{ label: 'Return later', action: 'return' as const }]
   }
 }
 
 async function startTimer() {
   const settings = await storage.get('settings')
   const delayInMinutes = settings.nudgeFrequency
+  await chrome.alarms.clear(SNOOZE_ALARM_NAME)
   await chrome.alarms.create(ALARM_NAME, { delayInMinutes })
   const alarm = await chrome.alarms.get(ALARM_NAME)
   await storage.set('timerState', {
@@ -350,6 +383,7 @@ async function stopTimer() {
 async function rearmAlarm() {
   const settings = await storage.get('settings')
   const delayInMinutes = settings.nudgeFrequency
+  await chrome.alarms.clear(SNOOZE_ALARM_NAME)
   await chrome.alarms.create(ALARM_NAME, { delayInMinutes })
   const alarm = await chrome.alarms.get(ALARM_NAME)
   const timerState = await storage.get('timerState')
@@ -394,8 +428,9 @@ async function recoverTimerState() {
         // Overdue — fire soon
         await chrome.alarms.create(ALARM_NAME, { delayInMinutes: 0.1 })
       } else {
-        const settings = await storage.get('settings')
-        await chrome.alarms.create(ALARM_NAME, { delayInMinutes: settings.nudgeFrequency })
+        const remainingMs = timerState.nextFireTime ? timerState.nextFireTime - Date.now() : 0
+        const delayInMinutes = Math.max(0.1, remainingMs / 60000)
+        await chrome.alarms.create(ALARM_NAME, { delayInMinutes })
       }
     }
   }
