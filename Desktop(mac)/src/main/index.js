@@ -296,8 +296,8 @@ ipcMain.handle('get-history', () => {
 
 // --- App lifecycle ---
 
-app.whenReady().then(() => {
-  db.init();
+app.whenReady().then(async () => {
+  await db.init();
   createMainWindow();
 
   // Restore timers if session was active
