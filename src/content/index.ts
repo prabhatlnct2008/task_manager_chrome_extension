@@ -7,6 +7,7 @@ import { CLASSIFICATION_CONFIG } from '../shared/constants'
 
 let shadowHost: HTMLDivElement | null = null
 let shadowRoot: ShadowRoot | null = null
+let escHandler: ((e: KeyboardEvent) => void) | null = null
 
 const OVERLAY_ID = 'anchorflow-overlay-host'
 
@@ -26,7 +27,15 @@ function getOrCreateShadowHost(): { host: HTMLDivElement; root: ShadowRoot } {
   return { host: shadowHost, root: shadowRoot }
 }
 
+function cleanupListeners() {
+  if (escHandler) {
+    document.removeEventListener('keydown', escHandler)
+    escHandler = null
+  }
+}
+
 function removeOverlay(sendDismiss = false) {
+  cleanupListeners()
   if (shadowHost) {
     shadowHost.remove()
     shadowHost = null
@@ -38,6 +47,9 @@ function removeOverlay(sendDismiss = false) {
 }
 
 function renderCheckinOverlay(payload: ShowOverlayPayload) {
+  // Clean up any previous listeners before creating new overlay
+  cleanupListeners()
+
   const { root } = getOrCreateShadowHost()
 
   const styles = `
@@ -144,7 +156,7 @@ function renderCheckinOverlay(payload: ShowOverlayPayload) {
     })
   })
 
-  // Backdrop click behavior
+  // Backdrop click + Escape behavior (soft mode only)
   if (!payload.hardMode) {
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
@@ -152,12 +164,12 @@ function renderCheckinOverlay(payload: ShowOverlayPayload) {
       }
     })
 
-    document.addEventListener('keydown', function escHandler(e) {
+    escHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         removeOverlay(true)
-        document.removeEventListener('keydown', escHandler)
       }
-    })
+    }
+    document.addEventListener('keydown', escHandler)
   }
 }
 

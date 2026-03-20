@@ -7,7 +7,12 @@
     "storage",
     "alarms",
     "activeTab",
-    "scripting"
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "action": {
     "default_popup": "src/popup/index.html",

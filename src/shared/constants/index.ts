@@ -1,4 +1,5 @@
 import type { Settings, DailyPlan, TimerState } from '../types'
+import { getTodayDate } from '../lib/date'
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
@@ -12,7 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
 }
 
 export const DEFAULT_DAILY_PLAN: DailyPlan = {
-  date: new Date().toISOString().split('T')[0],
+  date: getTodayDate(),
   tasks: [],
   activeTaskId: null,
 }
