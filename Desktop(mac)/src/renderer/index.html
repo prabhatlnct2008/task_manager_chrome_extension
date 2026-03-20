@@ -299,14 +299,17 @@
     const historyList = document.getElementById('history-list');
 
     let countdownInterval = null;
+    let currentSession = null;
 
     function showSetup() {
+      currentSession = null;
       setupView.style.display = 'block';
       activeView.style.display = 'none';
       clearInterval(countdownInterval);
     }
 
     function showActive(session, checkins) {
+      currentSession = session;
       setupView.style.display = 'none';
       activeView.style.display = 'flex';
 
@@ -314,7 +317,7 @@
       sessionFrequency.textContent = `Every ${session.frequencyMinutes}m`;
 
       updateDuration(session);
-      startCountdown(session);
+      startCountdown();
       renderHistory(checkins, session.id);
       updateLastCheckin(checkins, session.id);
     }
@@ -327,14 +330,14 @@
         : `${Math.floor(mins / 60)}h ${mins % 60}m elapsed`;
     }
 
-    function startCountdown(session) {
+    function startCountdown() {
       clearInterval(countdownInterval);
       countdownInterval = setInterval(() => {
-        if (!session.nextCheckinAt) {
+        if (!currentSession?.nextCheckinAt) {
           nextCheckinTimer.textContent = '--:--';
           return;
         }
-        const remaining = session.nextCheckinAt - Date.now();
+        const remaining = currentSession.nextCheckinAt - Date.now();
         if (remaining <= 0) {
           nextCheckinTimer.textContent = '00:00';
           return;
@@ -343,7 +346,7 @@
         const secs = Math.floor((remaining % 60000) / 1000);
         nextCheckinTimer.textContent =
           `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        updateDuration(session);
+        updateDuration(currentSession);
       }, 1000);
     }
 

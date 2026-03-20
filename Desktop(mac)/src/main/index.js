@@ -243,11 +243,11 @@ function handleCheckinResponse({ userResponse, responseType, classification }) {
     }
   }, delay);
 
-  // Show feedback in main window
-  notifyMainWindow();
-
   // Schedule next check-in
   scheduleCheckin(nextInterval);
+
+  // Notify after the next interval has been written back to session state
+  notifyMainWindow();
 
   return record;
 }
