@@ -1,17 +1,34 @@
 {
   "name": "anchorflow-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AnchorFlow Mac Desktop MVP - Focus session check-in app",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron ."
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.anchorflow.desktop",
+    "productName": "AnchorFlow",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg"
+    },
+    "files": [
+      "src/**/*"
+    ],
+    "extraResources": []
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron": "^41.0.3",
-    "electron-store": "^11.0.2"
+    "better-sqlite3": "^12.8.0",
+    "electron": "^41.0.3"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.8.1"
   }
 }

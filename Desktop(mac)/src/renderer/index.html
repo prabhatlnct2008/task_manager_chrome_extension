@@ -11,278 +11,402 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0f0f0f;
       color: #e0e0e0;
-      padding: 24px;
       user-select: none;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: #ffffff;
+    /* --- Tab Bar --- */
+    .tab-bar {
+      display: flex;
+      background: #141414;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 24px;
-    }
-
-    /* --- Session Setup --- */
-    .setup-form { display: flex; flex-direction: column; gap: 14px; }
-
-    label {
+    .tab-btn {
+      flex: 1;
+      padding: 12px 8px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #777;
       font-size: 12px;
       font-weight: 600;
-      color: #aaa;
+      font-family: inherit;
+      cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      display: block;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { color: #bbb; }
+    .tab-btn.active { color: #4a9eff; border-bottom-color: #4a9eff; }
+
+    /* --- Tab Content --- */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* --- Shared Styles --- */
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+    h2 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+    label {
+      font-size: 12px; font-weight: 600; color: #aaa;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 4px; display: block;
     }
 
     input, textarea, select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #2a2a2a;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      font-size: 14px;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.2s;
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid #2a2a2a; background: #1a1a1a;
+      color: #e0e0e0; font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
     }
 
-    input:focus, textarea:focus, select:focus {
-      border-color: #4a9eff;
-    }
-
-    textarea { resize: none; height: 60px; }
-
+    input:focus, textarea:focus, select:focus { border-color: #4a9eff; }
+    textarea { resize: none; }
     select { cursor: pointer; }
 
     .btn {
-      padding: 12px 20px;
-      border-radius: 10px;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
+      padding: 10px 18px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; font-family: inherit;
     }
-
     .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: #4a9eff; color: #fff; }
+    .btn-danger { background: #ff4a4a; color: #fff; }
+    .btn-secondary { background: #2a2a2a; color: #ccc; }
+    .btn-success { background: #4caf50; color: #fff; }
 
-    .btn-primary {
-      background: #4a9eff;
-      color: #fff;
+    .form-group { margin-bottom: 14px; }
+
+    .card {
+      background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 10px; padding: 16px; margin-bottom: 12px;
     }
 
-    .btn-danger {
-      background: #ff4a4a;
-      color: #fff;
+    .card h3 {
+      font-size: 12px; color: #888; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 8px;
     }
 
-    /* --- Active Session --- */
-    .active-session {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .empty-state { text-align: center; color: #555; font-size: 13px; padding: 24px; }
 
-    .status-card {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 18px;
-    }
+    /* --- Session Tab --- */
+    .setup-form { display: flex; flex-direction: column; gap: 14px; }
 
-    .status-card h3 {
-      font-size: 13px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .task-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-    }
+    .task-title-display { font-size: 20px; font-weight: 700; color: #fff; }
 
     .session-meta {
-      display: flex;
-      gap: 16px;
-      margin-top: 10px;
-      font-size: 13px;
-      color: #888;
+      display: flex; gap: 16px; margin-top: 10px; font-size: 13px; color: #888;
     }
-
     .session-meta span { display: flex; align-items: center; gap: 4px; }
 
     .timer-display {
-      font-size: 32px;
-      font-weight: 700;
-      color: #4a9eff;
-      text-align: center;
-      padding: 12px;
-      font-variant-numeric: tabular-nums;
+      font-size: 32px; font-weight: 700; color: #4a9eff;
+      text-align: center; padding: 12px; font-variant-numeric: tabular-nums;
     }
 
-    .last-checkin {
-      font-size: 13px;
-      color: #888;
-      text-align: center;
-      margin-top: -8px;
-    }
+    .last-checkin { font-size: 13px; color: #888; text-align: center; margin-top: -8px; margin-bottom: 8px; }
 
-    /* --- History --- */
-    .history-section { margin-top: 8px; }
-
-    .history-section h3 {
-      font-size: 13px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-    }
-
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
+    .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
 
     .history-item {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+      padding: 10px 12px; display: flex; align-items: center; font-size: 13px;
     }
-
     .history-item .response { color: #ccc; flex: 1; }
 
     .badge {
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      flex-shrink: 0;
-      margin-left: 8px;
+      padding: 3px 8px; border-radius: 4px; font-size: 11px;
+      font-weight: 600; text-transform: uppercase; flex-shrink: 0; margin-left: 8px;
     }
-
     .badge-aligned { background: #1a3a1a; color: #4caf50; }
     .badge-slightly_off { background: #3a3a1a; color: #ffb74d; }
     .badge-off_track { background: #3a1a1a; color: #ef5350; }
     .badge-break { background: #1a2a3a; color: #64b5f6; }
 
-    .time-label {
-      font-size: 11px;
-      color: #666;
-      flex-shrink: 0;
-      margin-right: 10px;
-      min-width: 50px;
-    }
-
-    .consequence {
-      font-size: 10px;
-      color: #666;
-      margin-left: 6px;
-      flex-shrink: 0;
-    }
-
+    .time-label { font-size: 11px; color: #666; flex-shrink: 0; margin-right: 10px; min-width: 50px; }
+    .consequence { font-size: 10px; color: #666; margin-left: 6px; flex-shrink: 0; }
     .consequence-shorter_interval { color: #ef5350; }
     .consequence-snooze { color: #64b5f6; }
 
-    .empty-state {
-      text-align: center;
-      color: #555;
-      font-size: 13px;
-      padding: 20px;
+    /* --- Task list in session --- */
+    .task-list { margin-top: 12px; }
+    .task-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px;
+      margin-bottom: 4px; font-size: 13px;
     }
+    .task-item.completed { opacity: 0.5; }
+    .task-item .task-ctx { font-size: 11px; color: #666; margin-left: auto; }
+    .task-item input[type="checkbox"] { accent-color: #4a9eff; }
+
+    /* --- Planner Tab --- */
+    .planner-input { height: 140px; margin-bottom: 12px; }
+    .planner-status { font-size: 12px; color: #888; margin-bottom: 12px; }
+
+    .planner-task-item {
+      display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px;
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .planner-task-item input[type="checkbox"] { margin-top: 2px; accent-color: #4a9eff; }
+    .planner-task-title { font-size: 13px; color: #e0e0e0; flex: 1; }
+    .planner-task-ctx { font-size: 11px; color: #666; margin-top: 2px; }
+
+    .planner-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* --- Stats Tab --- */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px;
+      padding: 14px; text-align: center;
+    }
+    .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; margin-top: 4px; }
+
+    .stat-value.green { color: #4caf50; }
+    .stat-value.yellow { color: #ffb74d; }
+    .stat-value.red { color: #ef5350; }
+    .stat-value.blue { color: #64b5f6; }
+
+    .history-table { width: 100%; font-size: 12px; }
+    .history-table th {
+      text-align: left; color: #888; text-transform: uppercase;
+      letter-spacing: 0.5px; font-size: 11px; padding: 8px 6px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .history-table td { padding: 8px 6px; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+
+    /* --- Settings Tab --- */
+    .key-input-row { display: flex; gap: 8px; align-items: flex-start; }
+    .key-input-row input { flex: 1; }
+    .test-result { font-size: 12px; margin-top: 6px; }
+    .test-result.success { color: #4caf50; }
+    .test-result.error { color: #ef5350; }
   </style>
 </head>
 <body>
-  <!-- Setup View -->
-  <div id="setup-view">
-    <h1>AnchorFlow</h1>
-    <p class="subtitle">Focus session check-in for macOS</p>
-
-    <div class="setup-form">
-      <div>
-        <label for="task-title">Task Title</label>
-        <input type="text" id="task-title" placeholder="What are you working on?">
-      </div>
-
-      <div>
-        <label for="frequency">Check-in Frequency</label>
-        <select id="frequency">
-          <option value="2">Every 2 minutes (testing)</option>
-          <option value="5">Every 5 minutes</option>
-          <option value="10">Every 10 minutes</option>
-          <option value="15">Every 15 minutes</option>
-          <option value="30">Every 30 minutes</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="duration">Session Duration (optional)</label>
-        <select id="duration">
-          <option value="">No limit</option>
-          <option value="15">15 minutes</option>
-          <option value="30">30 minutes</option>
-          <option value="45">45 minutes</option>
-          <option value="60">1 hour</option>
-          <option value="90">1.5 hours</option>
-          <option value="120">2 hours</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="note">Note (optional)</label>
-        <textarea id="note" placeholder="Any context for this session..."></textarea>
-      </div>
-
-      <button class="btn btn-primary" id="start-btn">Start Session</button>
-    </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="session">Session</button>
+    <button class="tab-btn" data-tab="planner">Planner</button>
+    <button class="tab-btn" data-tab="stats">Stats</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
   </div>
 
-  <!-- Active Session View -->
-  <div id="active-view" class="active-session">
-    <h1>AnchorFlow</h1>
+  <div class="tab-content">
 
-    <div class="status-card">
-      <h3>Current Focus</h3>
-      <div class="task-title" id="active-task"></div>
-      <div class="session-meta">
-        <span id="session-duration"></span>
-        <span id="session-frequency"></span>
+    <!-- ========== SESSION TAB ========== -->
+    <div id="tab-session" class="tab-pane active">
+      <!-- Setup View -->
+      <div id="setup-view">
+        <h1>AnchorFlow</h1>
+        <p class="subtitle">Focus session check-in for macOS</p>
+
+        <div class="setup-form">
+          <div class="form-group">
+            <label for="task-title">Task Title</label>
+            <input type="text" id="task-title" placeholder="What are you working on?">
+          </div>
+          <div class="form-group">
+            <label for="frequency">Check-in Frequency</label>
+            <select id="frequency">
+              <option value="2">Every 2 minutes (testing)</option>
+              <option value="5">Every 5 minutes</option>
+              <option value="10">Every 10 minutes</option>
+              <option value="15">Every 15 minutes</option>
+              <option value="30">Every 30 minutes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="duration">Session Duration (optional)</label>
+            <select id="duration">
+              <option value="">No limit</option>
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="note">Note (optional)</label>
+            <textarea id="note" style="height:60px" placeholder="Any context for this session..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="start-btn" style="width:100%;padding:12px">Start Session</button>
+        </div>
+      </div>
+
+      <!-- Active Session View -->
+      <div id="active-view" style="display:none">
+        <h1>AnchorFlow</h1>
+
+        <div class="card">
+          <h3>Current Focus</h3>
+          <div class="task-title-display" id="active-task"></div>
+          <div class="session-meta">
+            <span id="session-duration"></span>
+            <span id="session-frequency"></span>
+          </div>
+        </div>
+
+        <div class="timer-display" id="next-checkin-timer">--:--</div>
+        <div class="last-checkin" id="last-checkin-text">No check-ins yet</div>
+
+        <!-- Tasks for this session -->
+        <div id="session-tasks-section" style="display:none">
+          <div class="card">
+            <h3>Session Tasks</h3>
+            <div id="session-tasks-list" class="task-list"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Check-in History</h3>
+          <div class="history-list" id="history-list">
+            <div class="empty-state">No check-ins yet</div>
+          </div>
+        </div>
+
+        <button class="btn btn-danger" id="end-btn" style="width:100%;padding:12px">End Session</button>
       </div>
     </div>
 
-    <div class="timer-display" id="next-checkin-timer">--:--</div>
-    <div class="last-checkin" id="last-checkin-text">No check-ins yet</div>
+    <!-- ========== PLANNER TAB ========== -->
+    <div id="tab-planner" class="tab-pane">
+      <h2>Planner</h2>
+      <p class="subtitle">Paste messy planning text and extract clean tasks</p>
 
-    <div class="history-section">
-      <h3>Check-in History</h3>
-      <div class="history-list" id="history-list">
-        <div class="empty-state">No check-ins yet</div>
+      <div class="form-group">
+        <label for="planner-input">Planning Text</label>
+        <textarea id="planner-input" class="planner-input" placeholder="Paste your schedule, notes, or rough plan here...
+
+Example:
+# Website Project
+- Finalize homepage design
+- Set up hosting
+- Write copy for about page
+
+9:00 - 10:30 — Deep work on API
+10:30 - 11:00 — Email catchup"></textarea>
+      </div>
+
+      <button class="btn btn-primary" id="parse-btn">Extract Tasks</button>
+      <div class="planner-status" id="planner-status"></div>
+
+      <div id="planner-results" style="display:none">
+        <div class="card">
+          <h3>Extracted Tasks</h3>
+          <div id="planner-tasks-list"></div>
+        </div>
+
+        <div class="planner-actions">
+          <button class="btn btn-success" id="add-selected-btn">Add Selected Tasks</button>
+          <button class="btn btn-secondary" id="select-all-btn">Select All</button>
+          <button class="btn btn-secondary" id="deselect-all-btn">Deselect All</button>
+        </div>
       </div>
     </div>
 
-    <button class="btn btn-danger" id="end-btn">End Session</button>
+    <!-- ========== STATS TAB ========== -->
+    <div id="tab-stats" class="tab-pane">
+      <h2>Stats & History</h2>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="stat-sessions">-</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-checkins">-</div><div class="stat-label">Check-ins</div></div>
+        <div class="stat-card"><div class="stat-value green" id="stat-aligned">-</div><div class="stat-label">Aligned</div></div>
+        <div class="stat-card"><div class="stat-value red" id="stat-off-track">-</div><div class="stat-label">Off Track</div></div>
+        <div class="stat-card"><div class="stat-value yellow" id="stat-slightly-off">-</div><div class="stat-label">Slight Detour</div></div>
+        <div class="stat-card"><div class="stat-value blue" id="stat-breaks">-</div><div class="stat-label">Breaks</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-avg-duration">-</div><div class="stat-label">Avg Duration</div></div>
+        <div class="stat-card"><div class="stat-value green" id="stat-alignment-rate">-</div><div class="stat-label">Alignment Rate</div></div>
+      </div>
+
+      <h2>Session History</h2>
+      <div id="session-history-table"></div>
+
+      <h2 style="margin-top:20px">Recent Check-ins</h2>
+      <div id="checkin-history-table"></div>
+    </div>
+
+    <!-- ========== SETTINGS TAB ========== -->
+    <div id="tab-settings" class="tab-pane">
+      <h2>Settings</h2>
+
+      <div class="card">
+        <h3>OpenAI API Key</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px">Used for smart task extraction in the Planner. Stored locally only.</p>
+        <div class="key-input-row">
+          <input type="password" id="api-key-input" placeholder="sk-...">
+          <button class="btn btn-secondary" id="toggle-key-btn">Show</button>
+        </div>
+        <div class="test-result" id="test-result"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary" id="save-key-btn">Save Key</button>
+          <button class="btn btn-secondary" id="test-key-btn">Test Key</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Model</h3>
+        <div class="form-group">
+          <select id="model-select">
+            <option value="gpt-4o">GPT-4o (default)</option>
+            <option value="gpt-4o-mini">GPT-4o Mini</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="save-model-btn">Save Model</button>
+      </div>
+
+      <div class="card">
+        <h3>Database</h3>
+        <p style="font-size:12px;color:#888">Data is stored in a local SQLite database file in the app data directory. No data leaves your machine.</p>
+      </div>
+    </div>
+
   </div>
 
   <script>
+    // --- Tab navigation ---
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+
+        // Refresh data when switching to certain tabs
+        if (tab === 'stats') loadStats();
+        if (tab === 'settings') loadSettings();
+        if (tab === 'planner') loadPlannerTasks();
+      });
+    });
+
+    // ==========================================
+    // SESSION TAB
+    // ==========================================
+
     const setupView = document.getElementById('setup-view');
     const activeView = document.getElementById('active-view');
     const startBtn = document.getElementById('start-btn');
@@ -292,7 +416,7 @@
     const noteInput = document.getElementById('note');
     const durationSelect = document.getElementById('duration');
     const activeTask = document.getElementById('active-task');
-    const sessionDuration = document.getElementById('session-duration');
+    const sessionDurationEl = document.getElementById('session-duration');
     const sessionFrequency = document.getElementById('session-frequency');
     const nextCheckinTimer = document.getElementById('next-checkin-timer');
     const lastCheckinText = document.getElementById('last-checkin-text');
@@ -311,21 +435,22 @@
     function showActive(session, checkins) {
       currentSession = session;
       setupView.style.display = 'none';
-      activeView.style.display = 'flex';
+      activeView.style.display = 'block';
 
       activeTask.textContent = session.taskTitle;
       sessionFrequency.textContent = `Every ${session.frequencyMinutes}m`;
 
       updateDuration(session);
       startCountdown();
-      renderHistory(checkins, session.id);
+      renderCheckinHistory(checkins, session.id);
       updateLastCheckin(checkins, session.id);
+      loadSessionTasks(session.id);
     }
 
     function updateDuration(session) {
       const elapsed = Date.now() - session.startedAt;
       const mins = Math.floor(elapsed / 60000);
-      sessionDuration.textContent = mins < 60
+      sessionDurationEl.textContent = mins < 60
         ? `${mins}m elapsed`
         : `${Math.floor(mins / 60)}h ${mins % 60}m elapsed`;
     }
@@ -333,95 +458,88 @@
     function startCountdown() {
       clearInterval(countdownInterval);
       countdownInterval = setInterval(() => {
-        if (!currentSession?.nextCheckinAt) {
-          nextCheckinTimer.textContent = '--:--';
-          return;
-        }
+        if (!currentSession?.nextCheckinAt) { nextCheckinTimer.textContent = '--:--'; return; }
         const remaining = currentSession.nextCheckinAt - Date.now();
-        if (remaining <= 0) {
-          nextCheckinTimer.textContent = '00:00';
-          return;
-        }
+        if (remaining <= 0) { nextCheckinTimer.textContent = '00:00'; return; }
         const mins = Math.floor(remaining / 60000);
         const secs = Math.floor((remaining % 60000) / 1000);
-        nextCheckinTimer.textContent =
-          `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        nextCheckinTimer.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
         updateDuration(currentSession);
       }, 1000);
     }
 
     function updateLastCheckin(checkins, sessionId) {
-      const sessionCheckins = checkins.filter(c => c.sessionId === sessionId);
-      if (sessionCheckins.length === 0) {
-        lastCheckinText.textContent = 'No check-ins yet';
-        return;
-      }
-      const last = sessionCheckins[sessionCheckins.length - 1];
+      const sc = checkins.filter(c => c.sessionId === sessionId);
+      if (!sc.length) { lastCheckinText.textContent = 'No check-ins yet'; return; }
+      const last = sc[sc.length - 1];
       const ago = Math.floor((Date.now() - last.timestamp) / 60000);
-      const label = classificationLabel(last.classification);
-      lastCheckinText.textContent = `Last: ${label} — ${ago}m ago`;
+      lastCheckinText.textContent = `Last: ${classLabel(last.classification)} — ${ago}m ago`;
     }
 
-    function classificationLabel(c) {
-      const labels = {
-        aligned: 'On Task',
-        slightly_off: 'Slight Detour',
-        off_track: 'Off Track',
-        break: 'Break'
-      };
-      return labels[c] || c;
+    function classLabel(c) {
+      return { aligned:'On Task', slightly_off:'Slight Detour', off_track:'Off Track', break:'Break' }[c] || c;
     }
 
-    function consequenceLabel(c) {
-      const labels = {
-        shorter_interval: '1m next',
-        snooze: '5m break'
-      };
-      return labels[c] || '';
+    function conseqLabel(c) {
+      return { shorter_interval:'1m next', snooze:'5m break' }[c] || '';
     }
 
-    function renderHistory(checkins, sessionId) {
-      const sessionCheckins = checkins
-        .filter(c => c.sessionId === sessionId)
-        .reverse();
+    function renderCheckinHistory(checkins, sessionId) {
+      const sc = checkins.filter(c => c.sessionId === sessionId).reverse();
+      if (!sc.length) { historyList.innerHTML = '<div class="empty-state">No check-ins yet</div>'; return; }
 
-      if (sessionCheckins.length === 0) {
-        historyList.innerHTML = '<div class="empty-state">No check-ins yet</div>';
-        return;
-      }
-
-      historyList.innerHTML = sessionCheckins.map(c => {
-        const time = new Date(c.timestamp).toLocaleTimeString([], {
-          hour: '2-digit', minute: '2-digit'
-        });
-        const label = classificationLabel(c.classification);
-        const conseq = consequenceLabel(c.consequence);
-        return `
-          <div class="history-item">
-            <span class="time-label">${time}</span>
-            <span class="response">${escapeHtml(c.userResponse)}</span>
-            <span class="badge badge-${c.classification}">${label}</span>
-            ${conseq ? `<span class="consequence consequence-${c.consequence}">${conseq}</span>` : ''}
-          </div>
-        `;
+      historyList.innerHTML = sc.map(c => {
+        const time = new Date(c.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const label = classLabel(c.classification);
+        const cq = conseqLabel(c.consequence);
+        return `<div class="history-item">
+          <span class="time-label">${time}</span>
+          <span class="response">${esc(c.userResponse)}</span>
+          <span class="badge badge-${c.classification}">${label}</span>
+          ${cq ? `<span class="consequence consequence-${c.consequence}">${cq}</span>` : ''}
+        </div>`;
       }).join('');
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    async function loadSessionTasks(sessionId) {
+      const tasks = await window.api.getTasks(sessionId);
+      const section = document.getElementById('session-tasks-section');
+      const list = document.getElementById('session-tasks-list');
+
+      if (!tasks.length) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+
+      list.innerHTML = tasks.map(t => `
+        <div class="task-item ${t.status === 'completed' ? 'completed' : ''}" data-id="${esc(t.id)}">
+          <input type="checkbox" ${t.status === 'completed' ? 'checked' : ''}>
+          <span>${esc(t.title)}</span>
+          ${t.sourceContext ? `<span class="task-ctx">${esc(t.sourceContext)}</span>` : ''}
+        </div>
+      `).join('');
+
+      list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', async (e) => {
+          const item = e.target.closest('.task-item');
+          const id = item.dataset.id;
+          const completed = e.target.checked;
+          await window.api.updateTask(id, {
+            status: completed ? 'completed' : 'pending',
+            completedAt: completed ? Date.now() : null
+          });
+          item.classList.toggle('completed', completed);
+        });
+      });
     }
 
-    // --- Events ---
+    function esc(text) {
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    }
 
     startBtn.addEventListener('click', async () => {
       const taskTitle = taskInput.value.trim();
-      if (!taskTitle) {
-        taskInput.style.borderColor = '#ff4a4a';
-        taskInput.focus();
-        return;
-      }
+      if (!taskTitle) { taskInput.style.borderColor = '#ff4a4a'; taskInput.focus(); return; }
       taskInput.style.borderColor = '';
 
       const durationVal = durationSelect.value;
@@ -431,7 +549,6 @@
         frequencyMinutes: parseInt(frequencySelect.value),
         durationMinutes: durationVal ? parseInt(durationVal) : null
       });
-
       showActive(session, []);
     });
 
@@ -442,7 +559,6 @@
       showSetup();
     });
 
-    // Listen for state updates from main process
     window.api.onStateUpdate(({ session, checkins }) => {
       if (session && session.status === 'active') {
         showActive(session, checkins);
@@ -451,7 +567,215 @@
       }
     });
 
-    // Initial load
+    // ==========================================
+    // PLANNER TAB
+    // ==========================================
+
+    const plannerInput = document.getElementById('planner-input');
+    const parseBtn = document.getElementById('parse-btn');
+    const plannerStatus = document.getElementById('planner-status');
+    const plannerResults = document.getElementById('planner-results');
+    const plannerTasksList = document.getElementById('planner-tasks-list');
+    const addSelectedBtn = document.getElementById('add-selected-btn');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const deselectAllBtn = document.getElementById('deselect-all-btn');
+
+    let parsedTasks = [];
+
+    parseBtn.addEventListener('click', async () => {
+      const text = plannerInput.value.trim();
+      if (!text) return;
+
+      parseBtn.disabled = true;
+      plannerStatus.textContent = 'Extracting tasks...';
+      plannerResults.style.display = 'none';
+
+      try {
+        const result = await window.api.parsePlannerText(text);
+        parsedTasks = result.tasks;
+        const method = result.method === 'gpt' ? 'GPT-4o' : result.method === 'local_fallback' ? 'Local (GPT failed)' : 'Local parser';
+        plannerStatus.textContent = `Extracted ${parsedTasks.length} tasks via ${method}`;
+
+        if (parsedTasks.length > 0) {
+          plannerResults.style.display = 'block';
+          renderPlannerTasks();
+        }
+      } catch (err) {
+        plannerStatus.textContent = 'Error: ' + err.message;
+      } finally {
+        parseBtn.disabled = false;
+      }
+    });
+
+    function renderPlannerTasks() {
+      plannerTasksList.innerHTML = parsedTasks.map((t, i) => `
+        <div class="planner-task-item">
+          <input type="checkbox" data-idx="${i}" ${t.selected ? 'checked' : ''}>
+          <div>
+            <div class="planner-task-title">${esc(t.title)}</div>
+            ${t.sourceContext ? `<div class="planner-task-ctx">${esc(t.sourceContext)}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      plannerTasksList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          parsedTasks[parseInt(e.target.dataset.idx)].selected = e.target.checked;
+        });
+      });
+    }
+
+    addSelectedBtn.addEventListener('click', async () => {
+      const selected = parsedTasks.filter(t => t.selected);
+      if (!selected.length) return;
+
+      await window.api.createTasksFromPlanner(selected);
+      plannerStatus.textContent = `Added ${selected.length} tasks`;
+      plannerResults.style.display = 'none';
+      parsedTasks = [];
+      plannerInput.value = '';
+    });
+
+    selectAllBtn.addEventListener('click', () => {
+      parsedTasks.forEach(t => t.selected = true);
+      renderPlannerTasks();
+    });
+
+    deselectAllBtn.addEventListener('click', () => {
+      parsedTasks.forEach(t => t.selected = false);
+      renderPlannerTasks();
+    });
+
+    async function loadPlannerTasks() {
+      // Placeholder for future: show existing planned tasks
+    }
+
+    // ==========================================
+    // STATS TAB
+    // ==========================================
+
+    async function loadStats() {
+      try {
+        const [stats, history] = await Promise.all([
+          window.api.getStats(),
+          window.api.getHistory()
+        ]);
+
+        document.getElementById('stat-sessions').textContent = stats.sessions.total;
+        document.getElementById('stat-checkins').textContent = stats.checkins.total;
+        document.getElementById('stat-aligned').textContent = stats.checkins.aligned;
+        document.getElementById('stat-off-track').textContent = stats.checkins.offTrack;
+        document.getElementById('stat-slightly-off').textContent = stats.checkins.slightlyOff;
+        document.getElementById('stat-breaks').textContent = stats.checkins.break;
+
+        if (stats.sessions.avgDurationMs > 0) {
+          const mins = Math.round(stats.sessions.avgDurationMs / 60000);
+          document.getElementById('stat-avg-duration').textContent = mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
+        } else {
+          document.getElementById('stat-avg-duration').textContent = '-';
+        }
+
+        const rate = stats.checkins.total > 0
+          ? Math.round((stats.checkins.aligned / stats.checkins.total) * 100)
+          : 0;
+        document.getElementById('stat-alignment-rate').textContent = stats.checkins.total > 0 ? `${rate}%` : '-';
+
+        // Session history table
+        const sessionTable = document.getElementById('session-history-table');
+        if (history.sessions.length === 0) {
+          sessionTable.innerHTML = '<div class="empty-state">No sessions yet</div>';
+        } else {
+          sessionTable.innerHTML = `<table class="history-table">
+            <thead><tr><th>Task</th><th>Started</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody>${history.sessions.slice(0, 20).map(s => {
+              const start = new Date(s.startedAt).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+              let dur = '-';
+              if (s.endedAt) {
+                const m = Math.round((s.endedAt - s.startedAt) / 60000);
+                dur = m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}m`;
+              }
+              return `<tr><td>${esc(s.taskTitle)}</td><td>${start}</td><td>${dur}</td><td>${s.status}</td></tr>`;
+            }).join('')}</tbody></table>`;
+        }
+
+        // Checkin history table
+        const checkinTable = document.getElementById('checkin-history-table');
+        if (history.checkins.length === 0) {
+          checkinTable.innerHTML = '<div class="empty-state">No check-ins yet</div>';
+        } else {
+          checkinTable.innerHTML = `<table class="history-table">
+            <thead><tr><th>Time</th><th>Task</th><th>Response</th><th>Type</th><th>Consequence</th></tr></thead>
+            <tbody>${history.checkins.slice(0, 30).map(c => {
+              const time = new Date(c.timestamp).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+              return `<tr>
+                <td>${time}</td>
+                <td>${esc(c.promptTaskTitle || '')}</td>
+                <td>${esc(c.userResponse || '')}</td>
+                <td><span class="badge badge-${c.classification}">${classLabel(c.classification)}</span></td>
+                <td>${conseqLabel(c.consequence)}</td>
+              </tr>`;
+            }).join('')}</tbody></table>`;
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    // ==========================================
+    // SETTINGS TAB
+    // ==========================================
+
+    const apiKeyInput = document.getElementById('api-key-input');
+    const toggleKeyBtn = document.getElementById('toggle-key-btn');
+    const saveKeyBtn = document.getElementById('save-key-btn');
+    const testKeyBtn = document.getElementById('test-key-btn');
+    const testResult = document.getElementById('test-result');
+    const modelSelect = document.getElementById('model-select');
+    const saveModelBtn = document.getElementById('save-model-btn');
+
+    toggleKeyBtn.addEventListener('click', () => {
+      const isPassword = apiKeyInput.type === 'password';
+      apiKeyInput.type = isPassword ? 'text' : 'password';
+      toggleKeyBtn.textContent = isPassword ? 'Hide' : 'Show';
+    });
+
+    saveKeyBtn.addEventListener('click', async () => {
+      await window.api.saveSettings({ openai_api_key: apiKeyInput.value.trim() });
+      testResult.textContent = 'Key saved.';
+      testResult.className = 'test-result success';
+    });
+
+    testKeyBtn.addEventListener('click', async () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) { testResult.textContent = 'Enter a key first'; testResult.className = 'test-result error'; return; }
+
+      testResult.textContent = 'Testing...';
+      testResult.className = 'test-result';
+
+      const result = await window.api.testOpenaiKey(key);
+      if (result.valid) {
+        testResult.textContent = 'Key is valid!';
+        testResult.className = 'test-result success';
+      } else {
+        testResult.textContent = 'Invalid: ' + result.error;
+        testResult.className = 'test-result error';
+      }
+    });
+
+    saveModelBtn.addEventListener('click', async () => {
+      await window.api.saveSettings({ openai_model: modelSelect.value });
+    });
+
+    async function loadSettings() {
+      const settings = await window.api.getSettings();
+      if (settings.openai_api_key) apiKeyInput.value = settings.openai_api_key;
+      if (settings.openai_model) modelSelect.value = settings.openai_model;
+    }
+
+    // ==========================================
+    // INIT
+    // ==========================================
+
     (async () => {
       const { session, checkins } = await window.api.getState();
       if (session && session.status === 'active') {
