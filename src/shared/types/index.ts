@@ -121,3 +121,19 @@ export interface StatusResponse {
   activeTaskTitle: string | null
   snoozeCount: number
 }
+
+// Planner schedule types
+export interface ScheduleChecklistItem {
+  text: string
+  done: boolean
+}
+
+export interface ScheduleBlock {
+  id: string
+  startTime: string | null
+  endTime: string | null
+  title: string
+  notes: string[]
+  items: ScheduleChecklistItem[]
+  tags: string[]
+}
