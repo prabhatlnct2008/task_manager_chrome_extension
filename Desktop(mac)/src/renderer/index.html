@@ -193,6 +193,16 @@
       min-width: 50px;
     }
 
+    .consequence {
+      font-size: 10px;
+      color: #666;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .consequence-shorter_interval { color: #ef5350; }
+    .consequence-snooze { color: #64b5f6; }
+
     .empty-state {
       text-align: center;
       color: #555;
@@ -221,6 +231,19 @@
           <option value="10">Every 10 minutes</option>
           <option value="15">Every 15 minutes</option>
           <option value="30">Every 30 minutes</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="duration">Session Duration (optional)</label>
+        <select id="duration">
+          <option value="">No limit</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+          <option value="120">2 hours</option>
         </select>
       </div>
 
@@ -267,6 +290,7 @@
     const taskInput = document.getElementById('task-title');
     const frequencySelect = document.getElementById('frequency');
     const noteInput = document.getElementById('note');
+    const durationSelect = document.getElementById('duration');
     const activeTask = document.getElementById('active-task');
     const sessionDuration = document.getElementById('session-duration');
     const sessionFrequency = document.getElementById('session-frequency');
@@ -345,6 +369,14 @@
       return labels[c] || c;
     }
 
+    function consequenceLabel(c) {
+      const labels = {
+        shorter_interval: '1m next',
+        snooze: '5m break'
+      };
+      return labels[c] || '';
+    }
+
     function renderHistory(checkins, sessionId) {
       const sessionCheckins = checkins
         .filter(c => c.sessionId === sessionId)
@@ -360,11 +392,13 @@
           hour: '2-digit', minute: '2-digit'
         });
         const label = classificationLabel(c.classification);
+        const conseq = consequenceLabel(c.consequence);
         return `
           <div class="history-item">
             <span class="time-label">${time}</span>
             <span class="response">${escapeHtml(c.userResponse)}</span>
             <span class="badge badge-${c.classification}">${label}</span>
+            ${conseq ? `<span class="consequence consequence-${c.consequence}">${conseq}</span>` : ''}
           </div>
         `;
       }).join('');
@@ -387,10 +421,12 @@
       }
       taskInput.style.borderColor = '';
 
+      const durationVal = durationSelect.value;
       const session = await window.api.startSession({
         taskTitle,
         note: noteInput.value.trim(),
-        frequencyMinutes: parseInt(frequencySelect.value)
+        frequencyMinutes: parseInt(frequencySelect.value),
+        durationMinutes: durationVal ? parseInt(durationVal) : null
       });
 
       showActive(session, []);
