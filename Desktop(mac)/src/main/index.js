@@ -13,6 +13,7 @@ const store = new Store({
 let mainWindow = null;
 let checkinWindow = null;
 let checkinTimer = null;
+let durationTimer = null;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -45,10 +46,10 @@ function createCheckinWindow() {
   checkinWindow = new BrowserWindow({
     width: 460,
     height: 420,
-    alwaysOnTop: true,
     resizable: false,
     minimizable: false,
     closable: false,
+    fullscreenable: false,
     skipTaskbar: true,
     frame: false,
     webPreferences: {
@@ -58,8 +59,25 @@ function createCheckinWindow() {
     }
   });
 
+  // Use 'screen-saver' level to float above fullscreen apps on macOS
+  checkinWindow.setAlwaysOnTop(true, 'screen-saver');
+  checkinWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
   checkinWindow.loadFile(path.join(__dirname, '..', 'renderer', 'checkin.html'));
   checkinWindow.center();
+
+  // Aggressively take focus once content is ready
+  checkinWindow.once('ready-to-show', () => {
+    checkinWindow.show();
+    checkinWindow.focus();
+  });
+
+  // Re-focus if user tries to switch away while modal is open
+  checkinWindow.on('blur', () => {
+    if (checkinWindow && !checkinWindow.isDestroyed()) {
+      checkinWindow.focus();
+    }
+  });
 
   checkinWindow.on('closed', () => {
     checkinWindow = null;
@@ -87,7 +105,7 @@ function updateSession(id, updates) {
   store.set('sessions', sessions);
 }
 
-function startSession({ taskTitle, note, frequencyMinutes }) {
+function startSession({ taskTitle, note, frequencyMinutes, durationMinutes }) {
   // End any existing session
   const existing = getActiveSession();
   if (existing) endSession();
@@ -100,6 +118,7 @@ function startSession({ taskTitle, note, frequencyMinutes }) {
     startedAt: now,
     endedAt: null,
     frequencyMinutes,
+    durationMinutes: durationMinutes || null,
     status: 'active',
     nextCheckinAt: now + frequencyMinutes * 60 * 1000
   };
@@ -110,6 +129,7 @@ function startSession({ taskTitle, note, frequencyMinutes }) {
   store.set('activeSessionId', session.id);
 
   scheduleCheckin(frequencyMinutes);
+  scheduleDurationEnd(session);
   notifyMainWindow();
   return session;
 }
@@ -125,7 +145,28 @@ function endSession() {
   });
   store.set('activeSessionId', null);
   clearCheckinTimer();
+  clearDurationTimer();
   notifyMainWindow();
+}
+
+function scheduleDurationEnd(session) {
+  clearDurationTimer();
+  if (!session.durationMinutes) return;
+  const remaining = (session.startedAt + session.durationMinutes * 60 * 1000) - Date.now();
+  if (remaining <= 0) {
+    endSession();
+    return;
+  }
+  durationTimer = setTimeout(() => {
+    endSession();
+  }, remaining);
+}
+
+function clearDurationTimer() {
+  if (durationTimer) {
+    clearTimeout(durationTimer);
+    durationTimer = null;
+  }
 }
 
 // --- Timer scheduling ---
@@ -239,7 +280,7 @@ ipcMain.handle('checkin-response', (_event, data) => {
 app.whenReady().then(() => {
   createMainWindow();
 
-  // Restore timer if session was active
+  // Restore timers if session was active
   const session = getActiveSession();
   if (session && session.status === 'active') {
     const remaining = session.nextCheckinAt - Date.now();
@@ -248,11 +289,12 @@ app.whenReady().then(() => {
     } else {
       createCheckinWindow();
     }
+    scheduleDurationEnd(session);
   }
 });
 
 app.on('window-all-closed', () => {
-  // Keep app running even if all windows close (tray behavior)
+  // On macOS, keep app alive in dock so it can be reactivated
   if (process.platform !== 'darwin') {
     app.quit();
   }

@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   getActiveSession: () => ipcRenderer.invoke('get-active-session'),
   checkinResponse: (data) => ipcRenderer.invoke('checkin-response', data),
   onStateUpdate: (callback) => {
-    ipcRenderer.on('state-update', (_event, data) => callback(data));
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('state-update', handler);
+    return () => ipcRenderer.removeListener('state-update', handler);
   }
 });
