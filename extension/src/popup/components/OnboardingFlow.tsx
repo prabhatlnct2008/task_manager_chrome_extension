@@ -94,7 +94,7 @@ export function OnboardingFlow() {
         <ChipGroup
           options={NUDGE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label }))}
           value={String(settings.nudgeFrequency)}
-          onChange={(v) => updateField('nudgeFrequency', Number(v) as 15 | 30 | 45 | 60)}
+          onChange={(v) => updateField('nudgeFrequency', Number(v) as 2 | 15 | 30 | 45 | 60)}
         />
       </div>
       <div className="space-y-1.5">

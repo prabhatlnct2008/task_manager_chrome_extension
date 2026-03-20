@@ -34,7 +34,7 @@ export function Dashboard() {
     return dailyPlan
   }, [dailyPlan])
 
-  const tasks = plan.tasks.sort((a, b) => a.order - b.order)
+  const tasks = [...plan.tasks].sort((a, b) => a.order - b.order)
   const activeTask = tasks.find((t) => t.id === plan.activeTaskId)
   const completedCount = tasks.filter((t) => t.completed).length
 
@@ -108,6 +108,12 @@ export function Dashboard() {
       newActiveTaskId = nextTask?.id || null
     }
     await savePlan({ ...plan, tasks: updatedTasks, activeTaskId: newActiveTaskId })
+
+    if (!newActiveTaskId) {
+      try {
+        await sendMessage({ type: 'STOP_TIMER' })
+      } catch { /* ok */ }
+    }
   }
 
   const saveEditTask = async () => {

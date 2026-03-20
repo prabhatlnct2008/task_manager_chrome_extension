@@ -191,6 +191,25 @@ function renderFeedbackPanel(payload: ShowFeedbackPayload) {
     `
   }
 
+  let switchTaskHtml = ''
+  const hasSwitchTask = payload.ctaOptions.some((o) => o.action === 'switch_task')
+  if (hasSwitchTask && payload.availableTasks && payload.availableTasks.length > 0) {
+    const optionsHtml = payload.availableTasks
+      .map(
+        (task) =>
+          `<option value="${escapeHtml(task.id)}">${escapeHtml(task.title)}</option>`
+      )
+      .join('')
+    switchTaskHtml = `
+      <div class="side-quest-input" id="af-switch-area" style="display:none;">
+        <select class="input-area" id="af-switch-select" style="min-height:36px;">
+          <option value="">Choose a task...</option>
+          ${optionsHtml}
+        </select>
+      </div>
+    `
+  }
+
   const ctaHtml = payload.ctaOptions
     .map(
       (opt, i) =>
@@ -207,6 +226,7 @@ function renderFeedbackPanel(payload: ShowFeedbackPayload) {
     <div class="feedback-suggestion">${escapeHtml(payload.suggestion)}</div>
     <div class="task-label" style="margin-bottom:16px;">Current focus: <span style="color:#0d9488;font-weight:600;">${escapeHtml(payload.activeTaskTitle)}</span></div>
     ${sideQuestHtml}
+    ${switchTaskHtml}
     <div class="cta-row" id="af-ctas">${ctaHtml}</div>
   `
 
@@ -229,6 +249,18 @@ function renderFeedbackPanel(payload: ShowFeedbackPayload) {
       }
     }
 
+    if (action === 'switch_task') {
+      const switchArea = shadowRoot!.getElementById('af-switch-area')
+      if (switchArea && switchArea.style.display === 'none') {
+        switchArea.style.display = 'block'
+        const switchSelect = shadowRoot!.getElementById('af-switch-select') as HTMLSelectElement
+        switchSelect.focus()
+        target.textContent = 'Confirm Switch'
+        target.dataset.action = 'confirm_switch_task'
+        return
+      }
+    }
+
     if (action === 'confirm_side_quest') {
       const sqInput = shadowRoot!.getElementById('af-sq-input') as HTMLInputElement
       chrome.runtime.sendMessage({
@@ -236,6 +268,20 @@ function renderFeedbackPanel(payload: ShowFeedbackPayload) {
         payload: {
           action: 'save_side_quest',
           sideQuestTitle: sqInput.value || 'Untitled side quest',
+          checkinId: payload.checkinId,
+        },
+      })
+    } else if (action === 'confirm_switch_task') {
+      const switchSelect = shadowRoot!.getElementById('af-switch-select') as HTMLSelectElement
+      if (!switchSelect.value) {
+        switchSelect.focus()
+        return
+      }
+      chrome.runtime.sendMessage({
+        type: 'OVERLAY_ACTION',
+        payload: {
+          action: 'switch_task',
+          targetTaskId: switchSelect.value,
           checkinId: payload.checkinId,
         },
       })

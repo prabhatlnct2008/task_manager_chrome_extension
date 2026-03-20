@@ -2,10 +2,12 @@ import React, { useState, useMemo, useRef } from 'react'
 import { useStorageValue } from '../../shared/hooks'
 import { Card } from '../../shared/components/Card'
 import { Button } from '../../shared/components/Button'
+import { Modal } from '../../shared/components/Modal'
 import { storage, generateId } from '../../shared/lib/storage'
 import { getTodayDate } from '../../shared/lib/date'
 import { sendMessage } from '../../shared/lib/messaging'
 import { parseSchedule } from '../../shared/lib/scheduleParser'
+import { extractTasksFromPlanText } from '../../shared/lib/ai'
 import type { Task, DailyPlan, ScheduleBlock } from '../../shared/types'
 import { DEFAULT_DAILY_PLAN } from '../../shared/constants'
 
@@ -17,6 +19,9 @@ export function PlannerApp() {
   const [inputMode, setInputMode] = useState<InputMode>('quick')
   const [parsedBlocks, setParsedBlocks] = useState<ScheduleBlock[]>([])
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set()) // "blockId:itemIdx" or "blockId:title"
+  const [isConverting, setIsConverting] = useState(false)
+  const [conversionHint, setConversionHint] = useState<string | null>(null)
+  const [showClearTasksConfirm, setShowClearTasksConfirm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const dragItem = useRef<number | null>(null)
@@ -37,32 +42,46 @@ export function PlannerApp() {
   }
 
   // --- Quick mode: simple line-per-task ---
-  const convertGoalsToTasks = () => {
-    const lines = goalText
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0)
-    if (lines.length === 0) return
+  const convertGoalsToTasks = async () => {
+    if (!goalText.trim()) return
 
-    const newTasks: Task[] = lines.map((line, i) => ({
-      id: generateId(),
-      title: line.replace(/^[-•*]\s*/, ''),
-      completed: false,
-      createdAt: Date.now(),
-      order: tasks.length + i,
-    }))
+    setIsConverting(true)
+    setConversionHint(null)
 
-    const updatedPlan: DailyPlan = {
-      ...plan,
-      date: getTodayDate(),
-      tasks: [...plan.tasks, ...newTasks],
-      activeTaskId: plan.activeTaskId || newTasks[0].id,
-    }
-    savePlan(updatedPlan)
-    setGoalText('')
+    try {
+      const settings = await storage.get('settings')
+      const result = await extractTasksFromPlanText(goalText, settings)
 
-    if (!plan.activeTaskId) {
-      sendMessage({ type: 'START_TIMER' }).catch(() => {})
+      if (result.tasks.length === 0) {
+        setConversionHint('No usable tasks were found in that text.')
+        return
+      }
+
+      const newTasks: Task[] = result.tasks.map((taskTitle, i) => ({
+        id: generateId(),
+        title: taskTitle,
+        completed: false,
+        createdAt: Date.now(),
+        order: tasks.length + i,
+      }))
+
+      const updatedPlan: DailyPlan = {
+        ...plan,
+        date: getTodayDate(),
+        tasks: [...plan.tasks, ...newTasks],
+        activeTaskId: plan.activeTaskId || newTasks[0].id,
+      }
+      await savePlan(updatedPlan)
+      setGoalText('')
+      setConversionHint(result.usedFallback
+        ? 'Converted with fallback parsing.'
+        : 'Converted with AI-assisted parsing.')
+
+      if (!plan.activeTaskId) {
+        sendMessage({ type: 'START_TIMER' }).catch(() => {})
+      }
+    } finally {
+      setIsConverting(false)
     }
   }
 
@@ -101,6 +120,7 @@ export function PlannerApp() {
 
     for (const block of parsedBlocks) {
       const prefix = block.startTime ? `[${block.startTime}] ` : ''
+      const contextTitle = block.title.trim()
 
       if (selectedItems.has(`${block.id}:title`) && block.title) {
         newTasks.push({
@@ -114,9 +134,12 @@ export function PlannerApp() {
 
       block.items.forEach((item, idx) => {
         if (selectedItems.has(`${block.id}:${idx}`)) {
+          const contextualTitle = contextTitle
+            ? `${prefix}${contextTitle}: ${item.text}`
+            : `${prefix}${item.text}`
           newTasks.push({
             id: generateId(),
-            title: item.text,
+            title: contextualTitle,
             completed: false,
             createdAt: Date.now(),
             order: order++,
@@ -160,6 +183,10 @@ export function PlannerApp() {
       newActiveTaskId = nextTask?.id || null
     }
     await savePlan({ ...plan, tasks: updatedTasks, activeTaskId: newActiveTaskId })
+
+    if (!newActiveTaskId) {
+      sendMessage({ type: 'STOP_TIMER' }).catch(() => {})
+    }
   }
 
   const deleteTask = async (taskId: string) => {
@@ -170,6 +197,20 @@ export function PlannerApp() {
       newActiveTaskId = nextTask?.id || null
     }
     await savePlan({ ...plan, tasks: updatedTasks, activeTaskId: newActiveTaskId })
+
+    if (!newActiveTaskId) {
+      sendMessage({ type: 'STOP_TIMER' }).catch(() => {})
+    }
+  }
+
+  const clearAllTasks = async () => {
+    await savePlan({
+      ...plan,
+      tasks: [],
+      activeTaskId: null,
+    })
+    setShowClearTasksConfirm(false)
+    sendMessage({ type: 'STOP_TIMER' }).catch(() => {})
   }
 
   const saveEdit = async () => {
@@ -267,7 +308,7 @@ export function PlannerApp() {
             </div>
             <p className="text-sm text-slate-500 mb-4">
               {inputMode === 'quick'
-                ? 'One task per line. Click convert to add them.'
+                ? 'Paste messy notes or blocks. AI will try to extract usable tasks and preserve context.'
                 : 'Paste a time-block schedule. We\'ll parse the structure for you.'}
             </p>
             <textarea
@@ -282,13 +323,13 @@ export function PlannerApp() {
             />
 
             {inputMode === 'quick' ? (
-              <Button
-                onClick={convertGoalsToTasks}
-                disabled={!goalText.trim()}
-                className="mt-3 w-full"
-              >
-                Convert to Tasks
-              </Button>
+                <Button
+                  onClick={convertGoalsToTasks}
+                  disabled={!goalText.trim() || isConverting}
+                  className="mt-3 w-full"
+                >
+                  {isConverting ? 'Converting...' : 'Convert to Tasks'}
+                </Button>
             ) : (
               <div className="flex gap-2 mt-3">
                 <Button
@@ -311,6 +352,10 @@ export function PlannerApp() {
               </div>
             )}
 
+            {conversionHint && inputMode === 'quick' && (
+              <p className="mt-3 text-xs text-slate-500">{conversionHint}</p>
+            )}
+
             {/* Parsed blocks preview */}
             {inputMode === 'schedule' && parsedBlocks.length > 0 && (
               <div className="mt-4 space-y-3">
@@ -331,12 +376,26 @@ export function PlannerApp() {
 
           {/* Right: Structured Tasks */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1">Today's Tasks</h2>
-            <p className="text-sm text-slate-500 mb-4">
-              {tasks.length > 0
-                ? `${tasks.filter((t) => t.completed).length} of ${tasks.length} complete. Drag to reorder.`
-                : 'No tasks yet. Use the left panel to add some.'}
-            </p>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 mb-1">Today's Tasks</h2>
+                <p className="text-sm text-slate-500">
+                  {tasks.length > 0
+                    ? `${tasks.filter((t) => t.completed).length} of ${tasks.length} complete. Drag to reorder.`
+                    : 'No tasks yet. Use the left panel to add some.'}
+                </p>
+              </div>
+              {tasks.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowClearTasksConfirm(true)}
+                  className="shrink-0"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
 
             {tasks.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -420,6 +479,24 @@ export function PlannerApp() {
           </Card>
         </div>
       </div>
+
+      <Modal
+        open={showClearTasksConfirm}
+        onClose={() => setShowClearTasksConfirm(false)}
+        title="Clear all tasks?"
+      >
+        <p className="text-sm text-slate-600">
+          This will remove every task from today&apos;s plan and stop the running timer.
+        </p>
+        <div className="flex gap-2 pt-3">
+          <Button variant="ghost" onClick={() => setShowClearTasksConfirm(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={clearAllTasks} className="flex-1">
+            Clear All Tasks
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

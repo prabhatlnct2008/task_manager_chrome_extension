@@ -54,6 +54,7 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
   const lines = raw.split('\n')
   const blocks: ScheduleBlock[] = []
   let current: ScheduleBlock | null = null
+  let currentSectionLabel = ''
 
   function pushCurrent() {
     if (current) {
@@ -91,6 +92,7 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
     if (timeMatch) {
       pushCurrent()
       current = makeBlock(timeMatch[1], timeMatch[2])
+      currentSectionLabel = ''
       continue
     }
 
@@ -107,6 +109,7 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
     // If we don't have a current block yet, start one without time
     if (!current) {
       current = makeBlock()
+      currentSectionLabel = ''
     }
 
     // Arrow note
@@ -128,7 +131,11 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
     const bulletMatch = trimmed.match(BULLET_RE)
     if (bulletMatch) {
       const { cleaned, tags } = extractTags(bulletMatch[1])
-      current.items.push({ text: cleaned, done: false })
+      const isIndented = /^\s+/.test(line)
+      const text = isIndented && currentSectionLabel
+        ? `${currentSectionLabel}: ${cleaned}`
+        : cleaned
+      current.items.push({ text, done: false })
       current.tags.push(...tags)
       continue
     }
@@ -137,6 +144,7 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
     const numberedMatch = trimmed.match(NUMBERED_RE)
     if (numberedMatch) {
       const { cleaned, tags } = extractTags(numberedMatch[1])
+      currentSectionLabel = cleaned
       current.items.push({ text: cleaned, done: false })
       current.tags.push(...tags)
       continue
@@ -147,6 +155,7 @@ export function parseSchedule(raw: string): ScheduleBlock[] {
       const { cleaned, tags } = extractTags(trimmed)
       current.title = cleaned
       current.tags.push(...tags)
+      currentSectionLabel = ''
       continue
     }
 

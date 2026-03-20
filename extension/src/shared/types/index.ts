@@ -32,7 +32,7 @@ export interface CheckinRecord {
 export interface Settings {
   apiKey: string
   model: string
-  nudgeFrequency: 15 | 30 | 45 | 60
+  nudgeFrequency: 2 | 15 | 30 | 45 | 60
   hardMode: boolean
   tone: 'gentle' | 'balanced' | 'firm'
   allowSnooze: boolean
@@ -96,6 +96,10 @@ export interface ShowFeedbackPayload {
   suggestion: string
   activeTaskTitle: string
   checkinId: string
+  availableTasks?: Array<{
+    id: string
+    title: string
+  }>
   ctaOptions: Array<{
     label: string
     action: 'continue' | 'return' | 'save_side_quest' | 'snooze' | 'switch_task'
@@ -112,6 +116,7 @@ export interface CheckinResponsePayload {
 export interface OverlayActionPayload {
   action: 'continue' | 'return' | 'save_side_quest' | 'snooze' | 'switch_task'
   sideQuestTitle?: string
+  targetTaskId?: string
   checkinId: string
 }
 

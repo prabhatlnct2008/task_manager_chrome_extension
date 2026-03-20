@@ -36,7 +36,8 @@ export const MODEL_OPTIONS = [
   { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Legacy, budget option' },
 ]
 
-export const NUDGE_OPTIONS: Array<{ value: 15 | 30 | 45 | 60; label: string }> = [
+export const NUDGE_OPTIONS: Array<{ value: 2 | 15 | 30 | 45 | 60; label: string }> = [
+  { value: 2, label: '2 min' },
   { value: 15, label: '15 min' },
   { value: 30, label: '30 min' },
   { value: 45, label: '45 min' },
