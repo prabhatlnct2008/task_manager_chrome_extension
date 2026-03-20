@@ -146,6 +146,13 @@ function endSession() {
   store.set('activeSessionId', null);
   clearCheckinTimer();
   clearDurationTimer();
+
+  // Close any open check-in modal
+  if (checkinWindow && !checkinWindow.isDestroyed()) {
+    checkinWindow.destroy();
+    checkinWindow = null;
+  }
+
   notifyMainWindow();
 }
 
@@ -227,11 +234,14 @@ function handleCheckinResponse({ userResponse, responseType, classification }) {
   checkins.push(record);
   store.set('checkins', checkins);
 
-  // Close checkin window
-  if (checkinWindow && !checkinWindow.isDestroyed()) {
-    checkinWindow.destroy();
-    checkinWindow = null;
-  }
+  // Let the renderer show feedback before closing the modal
+  const delay = classification === 'off_track' ? 3000 : 2000;
+  setTimeout(() => {
+    if (checkinWindow && !checkinWindow.isDestroyed()) {
+      checkinWindow.destroy();
+      checkinWindow = null;
+    }
+  }, delay);
 
   // Show feedback in main window
   notifyMainWindow();
