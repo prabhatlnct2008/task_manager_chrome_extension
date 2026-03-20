@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnchorFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      padding: 24px;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    /* --- Session Setup --- */
+    .setup-form { display: flex; flex-direction: column; gap: 14px; }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #4a9eff;
+    }
+
+    textarea { resize: none; height: 60px; }
+
+    select { cursor: pointer; }
+
+    .btn {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    .btn-primary {
+      background: #4a9eff;
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: #ff4a4a;
+      color: #fff;
+    }
+
+    /* --- Active Session --- */
+    .active-session {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .status-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .status-card h3 {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .task-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .session-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .session-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 700;
+      color: #4a9eff;
+      text-align: center;
+      padding: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .last-checkin {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      margin-top: -8px;
+    }
+
+    /* --- History --- */
+    .history-section { margin-top: 8px; }
+
+    .history-section h3 {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .history-item .response { color: #ccc; flex: 1; }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .badge-aligned { background: #1a3a1a; color: #4caf50; }
+    .badge-slightly_off { background: #3a3a1a; color: #ffb74d; }
+    .badge-off_track { background: #3a1a1a; color: #ef5350; }
+    .badge-break { background: #1a2a3a; color: #64b5f6; }
+
+    .time-label {
+      font-size: 11px;
+      color: #666;
+      flex-shrink: 0;
+      margin-right: 10px;
+      min-width: 50px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #555;
+      font-size: 13px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Setup View -->
+  <div id="setup-view">
+    <h1>AnchorFlow</h1>
+    <p class="subtitle">Focus session check-in for macOS</p>
+
+    <div class="setup-form">
+      <div>
+        <label for="task-title">Task Title</label>
+        <input type="text" id="task-title" placeholder="What are you working on?">
+      </div>
+
+      <div>
+        <label for="frequency">Check-in Frequency</label>
+        <select id="frequency">
+          <option value="2">Every 2 minutes (testing)</option>
+          <option value="5">Every 5 minutes</option>
+          <option value="10">Every 10 minutes</option>
+          <option value="15">Every 15 minutes</option>
+          <option value="30">Every 30 minutes</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="note">Note (optional)</label>
+        <textarea id="note" placeholder="Any context for this session..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" id="start-btn">Start Session</button>
+    </div>
+  </div>
+
+  <!-- Active Session View -->
+  <div id="active-view" class="active-session">
+    <h1>AnchorFlow</h1>
+
+    <div class="status-card">
+      <h3>Current Focus</h3>
+      <div class="task-title" id="active-task"></div>
+      <div class="session-meta">
+        <span id="session-duration"></span>
+        <span id="session-frequency"></span>
+      </div>
+    </div>
+
+    <div class="timer-display" id="next-checkin-timer">--:--</div>
+    <div class="last-checkin" id="last-checkin-text">No check-ins yet</div>
+
+    <div class="history-section">
+      <h3>Check-in History</h3>
+      <div class="history-list" id="history-list">
+        <div class="empty-state">No check-ins yet</div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger" id="end-btn">End Session</button>
+  </div>
+
+  <script>
+    const setupView = document.getElementById('setup-view');
+    const activeView = document.getElementById('active-view');
+    const startBtn = document.getElementById('start-btn');
+    const endBtn = document.getElementById('end-btn');
+    const taskInput = document.getElementById('task-title');
+    const frequencySelect = document.getElementById('frequency');
+    const noteInput = document.getElementById('note');
+    const activeTask = document.getElementById('active-task');
+    const sessionDuration = document.getElementById('session-duration');
+    const sessionFrequency = document.getElementById('session-frequency');
+    const nextCheckinTimer = document.getElementById('next-checkin-timer');
+    const lastCheckinText = document.getElementById('last-checkin-text');
+    const historyList = document.getElementById('history-list');
+
+    let countdownInterval = null;
+
+    function showSetup() {
+      setupView.style.display = 'block';
+      activeView.style.display = 'none';
+      clearInterval(countdownInterval);
+    }
+
+    function showActive(session, checkins) {
+      setupView.style.display = 'none';
+      activeView.style.display = 'flex';
+
+      activeTask.textContent = session.taskTitle;
+      sessionFrequency.textContent = `Every ${session.frequencyMinutes}m`;
+
+      updateDuration(session);
+      startCountdown(session);
+      renderHistory(checkins, session.id);
+      updateLastCheckin(checkins, session.id);
+    }
+
+    function updateDuration(session) {
+      const elapsed = Date.now() - session.startedAt;
+      const mins = Math.floor(elapsed / 60000);
+      sessionDuration.textContent = mins < 60
+        ? `${mins}m elapsed`
+        : `${Math.floor(mins / 60)}h ${mins % 60}m elapsed`;
+    }
+
+    function startCountdown(session) {
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        if (!session.nextCheckinAt) {
+          nextCheckinTimer.textContent = '--:--';
+          return;
+        }
+        const remaining = session.nextCheckinAt - Date.now();
+        if (remaining <= 0) {
+          nextCheckinTimer.textContent = '00:00';
+          return;
+        }
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        nextCheckinTimer.textContent =
+          `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        updateDuration(session);
+      }, 1000);
+    }
+
+    function updateLastCheckin(checkins, sessionId) {
+      const sessionCheckins = checkins.filter(c => c.sessionId === sessionId);
+      if (sessionCheckins.length === 0) {
+        lastCheckinText.textContent = 'No check-ins yet';
+        return;
+      }
+      const last = sessionCheckins[sessionCheckins.length - 1];
+      const ago = Math.floor((Date.now() - last.timestamp) / 60000);
+      const label = classificationLabel(last.classification);
+      lastCheckinText.textContent = `Last: ${label} — ${ago}m ago`;
+    }
+
+    function classificationLabel(c) {
+      const labels = {
+        aligned: 'On Task',
+        slightly_off: 'Slight Detour',
+        off_track: 'Off Track',
+        break: 'Break'
+      };
+      return labels[c] || c;
+    }
+
+    function renderHistory(checkins, sessionId) {
+      const sessionCheckins = checkins
+        .filter(c => c.sessionId === sessionId)
+        .reverse();
+
+      if (sessionCheckins.length === 0) {
+        historyList.innerHTML = '<div class="empty-state">No check-ins yet</div>';
+        return;
+      }
+
+      historyList.innerHTML = sessionCheckins.map(c => {
+        const time = new Date(c.timestamp).toLocaleTimeString([], {
+          hour: '2-digit', minute: '2-digit'
+        });
+        const label = classificationLabel(c.classification);
+        return `
+          <div class="history-item">
+            <span class="time-label">${time}</span>
+            <span class="response">${escapeHtml(c.userResponse)}</span>
+            <span class="badge badge-${c.classification}">${label}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- Events ---
+
+    startBtn.addEventListener('click', async () => {
+      const taskTitle = taskInput.value.trim();
+      if (!taskTitle) {
+        taskInput.style.borderColor = '#ff4a4a';
+        taskInput.focus();
+        return;
+      }
+      taskInput.style.borderColor = '';
+
+      const session = await window.api.startSession({
+        taskTitle,
+        note: noteInput.value.trim(),
+        frequencyMinutes: parseInt(frequencySelect.value)
+      });
+
+      showActive(session, []);
+    });
+
+    endBtn.addEventListener('click', async () => {
+      await window.api.endSession();
+      taskInput.value = '';
+      noteInput.value = '';
+      showSetup();
+    });
+
+    // Listen for state updates from main process
+    window.api.onStateUpdate(({ session, checkins }) => {
+      if (session && session.status === 'active') {
+        showActive(session, checkins);
+      } else {
+        showSetup();
+      }
+    });
+
+    // Initial load
+    (async () => {
+      const { session, checkins } = await window.api.getState();
+      if (session && session.status === 'active') {
+        showActive(session, checkins);
+      } else {
+        showSetup();
+      }
+    })();
+  </script>
+</body>
+</html>

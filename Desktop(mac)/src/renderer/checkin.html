@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check In</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #141414;
+      color: #e0e0e0;
+      padding: 28px 24px 24px;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .header .task-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #4a9eff;
+    }
+
+    .prompt {
+      font-size: 14px;
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .quick-btn {
+      padding: 10px 8px;
+      border-radius: 8px;
+      border: 2px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #ccc;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .quick-btn:hover { border-color: #4a9eff; color: #fff; }
+
+    .quick-btn.selected {
+      border-color: #4a9eff;
+      background: #1a2a3a;
+      color: #4a9eff;
+    }
+
+    .quick-btn.aligned { border-color: #2a3a2a; }
+    .quick-btn.aligned:hover, .quick-btn.aligned.selected { border-color: #4caf50; color: #4caf50; background: #1a2a1a; }
+
+    .quick-btn.slightly_off { border-color: #3a3a2a; }
+    .quick-btn.slightly_off:hover, .quick-btn.slightly_off.selected { border-color: #ffb74d; color: #ffb74d; background: #2a2a1a; }
+
+    .quick-btn.off_track { border-color: #3a2a2a; }
+    .quick-btn.off_track:hover, .quick-btn.off_track.selected { border-color: #ef5350; color: #ef5350; background: #2a1a1a; }
+
+    .quick-btn.break { border-color: #2a2a3a; }
+    .quick-btn.break:hover, .quick-btn.break.selected { border-color: #64b5f6; color: #64b5f6; background: #1a1a2a; }
+
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      height: 56px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: #4a9eff; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #4a9eff;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      font-family: inherit;
+    }
+
+    .submit-btn:hover { opacity: 0.85; }
+
+    .submit-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Feedback overlay */
+    .feedback {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #141414;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .feedback.visible { display: flex; }
+
+    .feedback-icon { font-size: 40px; }
+
+    .feedback-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .feedback-message {
+      font-size: 14px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <!-- Check-in form -->
+  <div id="checkin-form">
+    <div class="header">
+      <h2>Time to check in</h2>
+      <div class="task-name" id="task-name">Loading...</div>
+    </div>
+
+    <p class="prompt">What are you doing right now?</p>
+
+    <div class="quick-actions">
+      <button class="quick-btn aligned" data-classification="aligned">Still on task</button>
+      <button class="quick-btn slightly_off" data-classification="slightly_off">Slight detour</button>
+      <button class="quick-btn off_track" data-classification="off_track">Off track</button>
+      <button class="quick-btn break" data-classification="break">Need a break</button>
+    </div>
+
+    <textarea id="response-text" placeholder="Optional: add more detail..."></textarea>
+
+    <button class="submit-btn" id="submit-btn" disabled>Submit</button>
+  </div>
+
+  <!-- Feedback after submit -->
+  <div id="feedback" class="feedback">
+    <div class="feedback-icon" id="feedback-icon"></div>
+    <div class="feedback-title" id="feedback-title"></div>
+    <div class="feedback-message" id="feedback-message"></div>
+  </div>
+
+  <script>
+    const taskName = document.getElementById('task-name');
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    const responseText = document.getElementById('response-text');
+    const submitBtn = document.getElementById('submit-btn');
+    const checkinForm = document.getElementById('checkin-form');
+    const feedback = document.getElementById('feedback');
+    const feedbackIcon = document.getElementById('feedback-icon');
+    const feedbackTitle = document.getElementById('feedback-title');
+    const feedbackMessage = document.getElementById('feedback-message');
+
+    let selectedClassification = null;
+
+    // Load active session task
+    (async () => {
+      const session = await window.api.getActiveSession();
+      if (session) {
+        taskName.textContent = session.taskTitle;
+      }
+    })();
+
+    // Quick button selection
+    quickBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        quickBtns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedClassification = btn.dataset.classification;
+        submitBtn.disabled = false;
+      });
+    });
+
+    // Submit
+    submitBtn.addEventListener('click', async () => {
+      if (!selectedClassification) return;
+
+      const userResponse = responseText.value.trim() || classificationLabel(selectedClassification);
+      const responseType = responseText.value.trim() ? 'text' : 'quick';
+
+      await window.api.checkinResponse({
+        userResponse,
+        responseType,
+        classification: selectedClassification
+      });
+
+      showFeedback(selectedClassification);
+    });
+
+    function classificationLabel(c) {
+      const labels = {
+        aligned: 'Still on task',
+        slightly_off: 'Slight detour',
+        off_track: 'Off track',
+        break: 'Need a break'
+      };
+      return labels[c] || c;
+    }
+
+    const feedbackData = {
+      aligned: {
+        icon: '✅',
+        title: 'Great, keep going!',
+        message: 'Stay focused. Next check-in on schedule.'
+      },
+      slightly_off: {
+        icon: '↩️',
+        title: 'Time to refocus',
+        message: 'Small detours happen. Bring it back to your task.'
+      },
+      off_track: {
+        icon: '⚠️',
+        title: 'Get back on track',
+        message: 'Next check-in in 1 minute. Refocus now.'
+      },
+      break: {
+        icon: '☕',
+        title: 'Take 5 minutes',
+        message: 'Breaks are good. Check-in resumes after your break.'
+      }
+    };
+
+    function showFeedback(classification) {
+      const data = feedbackData[classification];
+      feedbackIcon.textContent = data.icon;
+      feedbackTitle.textContent = data.title;
+      feedbackMessage.textContent = data.message;
+
+      checkinForm.style.display = 'none';
+      feedback.classList.add('visible');
+
+      // Auto-close after delay
+      const delay = classification === 'off_track' ? 3000 : 2000;
+      setTimeout(() => {
+        window.close();
+      }, delay);
+    }
+
+    // Prevent closing without response
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
